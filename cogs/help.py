@@ -30,32 +30,39 @@ class HelpCommand(commands.MinimalHelpCommand):
     async def send_bot_help(self, mapping):
 
         ctx = self.context
-        # prefix = ctx.prefix  # config.prefix
 
-        return ctx
+        embed = discord.Embed(color=config.base_color)
+        embed.set_author(name="Help as arrived!",icon_url=ctx.bot.user.avatar_url)
+        embed.add_field(name="Commands",value='\n'.join([f"`{x.name} | {x.brief}`" for x in ctx.bot.commands if x.name not in ['jishaku']]),inline=False)
 
-    async def send_cog_help(self, cog):
+        embed.add_field(name="Useful Links",value=dedent(f"""
+        [`Support server`]({config.support})
+        [`Github`]({config.github})
+        """),inline=False)
 
-        ctx = self.context
-        # prefix = ctx.prefix
-        # commands = cog.get_commands()
-
-        return ctx
+        await ctx.send(embed=embed)
 
     async def send_command_help(self, command):
 
         ctx = self.context
-        # prefix = ctx.prefix
+        prefix = ctx.prefix
 
-        return ctx
+        embed = discord.Embed(color=config.base_color,title=f"Showing help for: \"{command.name}\"",description=command.description)
+        embed.add_field(name="Usage",value=f"`{prefix}{command} {' '.join([f'<{command.clean_params[x]}>' for x in command.clean_params])}`")
+
+        await ctx.send(embed=embed)
 
     async def send_group_help(self, group):
 
         ctx = self.context
-        # prefix = ctx.prefix
-        # command = ctx.bot.get_command(group.name)
+        command = ctx.bot.get_command(group.name)
 
-        return ctx
+        str = "\n".join(f"`{x.name} | {x.brief}`" for x in group.commands)
+
+        embed = discord.Embed(color=config.base_color,title=f"Showing help for: \"{command}\"",description=group.description)
+        embed.add_field(name="Commands",value=str)
+        
+        await ctx.send(embed=embed)
 
 
 class Help(commands.Cog):
