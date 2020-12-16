@@ -299,21 +299,5 @@ class github(commands.Cog):
             await ctx.send(err)    
 
 
-    @commands.command(name="--help",brief="Shows this menu.",description="Get information off of github based on user, repo, org.")   
-    async def _github_help(self,ctx):
-
-        embed = discord.Embed(color=config.base_color)
-        embed.set_author(name="Help as arrived!",icon_url=self.bot.user.avatar_url)
-        embed.add_field(name="Commands",value=dedent(f"""
-        For commands please check out my [GitHub Repo](), this will list commands and how to use them. If you're still confused feel free to join my [Support server]({config.support})
-        """),inline=False)
-
-        embed.add_field(name="Useful Links",value=dedent(f"""
-        [`Support server`]({config.support})
-        [`Github`]({config.github})
-        """),inline=False)
-
-        await ctx.send(embed=embed)
-
 def setup(bot):
     bot.add_cog(github(bot))
