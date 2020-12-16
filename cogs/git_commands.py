@@ -67,8 +67,8 @@ class make_my_life_easier:
 
         return embed
 
-    async def search_user_repos(self,user):
-        data = requests.get(self.g.get_user(user).repos_url).json()
+    async def search_user_repos(self,user,page):
+        data = requests.get(f"{self.g.get_user(user).repos_url}?page={page}&per_page=29").json()
         fields = 7
 
         repos = [f"""`[{x}]` [`{data[x]['full_name']}`]({data[x]['html_url']}) {"<:fork:788611349352546310>" if data[x]['fork'] else ""}""" for x in range(len(data))]
@@ -171,20 +171,14 @@ class make_my_life_easier:
 
         return {"embed": embed, "repo_data": [data[x]['login'] for x in range(len(data))]}
 
-    async def search_for_code(self,statement):
-        code_seach = self.g.search_code(statement).get_page(1)
+    async def find_largest_starred(self,user):
+        data = requests.get(self.g.get_user(user).repos_url).json()
         list = []
-        for x in code_seach:
-            try:
-                repo = x.path.split('/')[0]
-                possible_repo = self.g.search_repositories(repo).get_page(1)[0]
-                if type(possible_repo) == Repository.Repository:
-                    list.append(repo)
-            except:
-                pass
 
-        print(list)
-        return(list)
+        for x in range(len(data)):
+            list.append(data[x]['stargazers_count'])
+
+        return f"**{user}**'s most starred repo has **{max(list)}** stars."
 
 class github(commands.Cog):
     def __init__(self, bot):
@@ -203,10 +197,10 @@ class github(commands.Cog):
             await ctx.send(err)
     
     @_github_user.command(name="-repos",brief="View a users **PUBLIC** repos",description="Get information on a users repository")
-    async def _github_user_repos(self,ctx,*,user):
+    async def _github_user_repos(self,ctx,user,page:int=1):
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
-            returned = await ibxs_helper.search_user_repos(user=user)
+            returned = await ibxs_helper.search_user_repos(user=user,page=page)
 
             await ctx.message.add_reaction("✔️")
             original_message = await ctx.send(embed=returned['embed'])
@@ -298,6 +292,17 @@ class github(commands.Cog):
             await ctx.message.add_reaction("❌")
             await ctx.send(err)    
 
+    @commands.command(name="--starred",brief="Get information off of github basedd on user, repo, org",description="Get information off of github based on user, repo, org.")
+    async def _github_starred(self,ctx,*,user):
+        ibxs_helper = make_my_life_easier(bot=self.bot)
+        try:
+            returned = await ibxs_helper.find_largest_starred(user=user)
+
+            await ctx.message.add_reaction("✔️")
+            await ctx.send(returned)
+        except Exception as err:
+            await ctx.message.add_reaction("❌")
+            await ctx.send(err)
 
 def setup(bot):
     bot.add_cog(github(bot))
