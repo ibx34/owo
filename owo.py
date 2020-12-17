@@ -48,7 +48,7 @@ class owo(commands.Bot):
         self.pool = None
         self.redis = None
         self.used = 0
-        
+
     async def get_pre(self, bot, message):
 
         return commands.when_mentioned_or(*config.prefix)(bot, message)
