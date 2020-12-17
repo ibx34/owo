@@ -32,13 +32,29 @@ class HelpCommand(commands.MinimalHelpCommand):
         ctx = self.context
 
         embed = discord.Embed(color=config.base_color)
-        embed.set_author(name="Help as arrived!",icon_url=ctx.bot.user.avatar_url)
-        embed.add_field(name="Commands",value='\n'.join([f"`{x.name} | {x.brief}`" for x in ctx.bot.commands if x.name not in ['jishaku']]),inline=False)
+        embed.set_author(name="Help as arrived!", icon_url=ctx.bot.user.avatar_url)
+        embed.add_field(
+            name="Commands",
+            value="\n".join(
+                [
+                    f"`{x.name} | {x.brief}`"
+                    for x in ctx.bot.commands
+                    if x.name not in ["jishaku"]
+                ]
+            ),
+            inline=False,
+        )
 
-        embed.add_field(name="Useful Links",value=dedent(f"""
+        embed.add_field(
+            name="Useful Links",
+            value=dedent(
+                f"""
         [`Support server`]({config.support})
         [`Github`]({config.github})
-        """),inline=False)
+        """
+            ),
+            inline=False,
+        )
 
         await ctx.send(embed=embed)
 
@@ -47,8 +63,15 @@ class HelpCommand(commands.MinimalHelpCommand):
         ctx = self.context
         prefix = ctx.prefix
 
-        embed = discord.Embed(color=config.base_color,title=f"Showing help for: \"{command.name}\"",description=command.description)
-        embed.add_field(name="Usage",value=f"`{prefix}{command} {' '.join([f'<{command.clean_params[x]}>' for x in command.clean_params])}`")
+        embed = discord.Embed(
+            color=config.base_color,
+            title=f'Showing help for: "{command.name}"',
+            description=command.description,
+        )
+        embed.add_field(
+            name="Usage",
+            value=f"`{prefix}{command} {' '.join([f'<{command.clean_params[x]}>' for x in command.clean_params])}`",
+        )
 
         await ctx.send(embed=embed)
 
@@ -59,9 +82,13 @@ class HelpCommand(commands.MinimalHelpCommand):
 
         str = "\n".join(f"`{x.name} | {x.brief}`" for x in group.commands)
 
-        embed = discord.Embed(color=config.base_color,title=f"Showing help for: \"{command}\"",description=group.description)
-        embed.add_field(name="Commands",value=str)
-        
+        embed = discord.Embed(
+            color=config.base_color,
+            title=f'Showing help for: "{command}"',
+            description=group.description,
+        )
+        embed.add_field(name="Commands", value=str)
+
         await ctx.send(embed=embed)
 
 
