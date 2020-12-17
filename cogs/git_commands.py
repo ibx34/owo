@@ -115,8 +115,6 @@ class make_my_life_easier:
 
     async def search_repo(self, repo):
         data = self.g.get_repo(repo).raw_data
-        InputFileContent
-
         embed = discord.Embed(
             color=config.base_color,
             title=f'Showing info for: "{repo}"',
@@ -128,7 +126,7 @@ class make_my_life_easier:
             value=dedent(
                 f"""
         [`Jump to repo`]({data['html_url']})
-        [`Issies`]({data['html_url']}/issues)
+        [`Issues`]({data['html_url']}/issues)
         [`Pull Requests`]({data['html_url']}/pulls)
         [`Stars ({data['stargazers_count']})`]({data['html_url']}/stargazers)
         [`Forks`]({data['html_url']}/network/members)
@@ -369,6 +367,29 @@ class make_my_life_easier:
 
         return embed
 
+    async def get_repo_contributors(self,repo,page):
+        data = self.g.get_repo(repo)
+        contributors = data.get_contributors().get_page(page)
+        contributors_list = [
+            f"[`{x.login}`]({x.html_url})" for x in contributors
+        ]
+        fields = 7
+        decided = [
+            contributors_list[i * fields : (i + 1) * fields]
+            for i in range((len(contributors_list) + fields - 1) // fields)
+        ]
+        pages = []
+
+        for x in range(len(decided)):
+            embed = discord.Embed(
+                color=config.base_color, title=f'Showing contributors for: "{repo}"'
+            )
+            embed.set_thumbnail(url=data.owner.avatar_url)
+            embed.add_field(name=f"Links {x}", value="\n".join(decided[x]))
+            pages.append(embed)
+
+        return pages
+
 
 class github(commands.Cog):
     def __init__(self, bot):
@@ -463,6 +484,24 @@ class github(commands.Cog):
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.search_repo_issues(repo=repo, page=page)
+
+            await ctx.message.add_reaction("✔️")
+            paginator = BotEmbedPaginator(ctx, returned)
+            return await paginator.run()
+            # await ctx.send(embed=returned)
+        except Exception as err:
+            await ctx.message.add_reaction("❌")
+            await ctx.send(err)
+
+    @_github_repo.command(
+        name="-contributors",
+        brief="Get information off of github basedd on user, repo, org",
+        description="Get information off of github based on user, repo, org.",
+    )
+    async def _github_repo_contributors(self, ctx, repo, page: int = 1):
+        ibxs_helper = make_my_life_easier(bot=self.bot)
+        try:
+            returned = await ibxs_helper.get_repo_contributors(repo=repo, page=page)
 
             await ctx.message.add_reaction("✔️")
             paginator = BotEmbedPaginator(ctx, returned)
