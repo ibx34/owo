@@ -28,6 +28,7 @@ pyyaml = "*"
 unidecode = "*"
 requests-oauthlib = "*"
 pygithub = "*"
+pymongo = "*"
 
 [requires]
 python_version = "3.8"
