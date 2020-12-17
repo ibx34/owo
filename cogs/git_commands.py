@@ -29,7 +29,7 @@ import requests
 from discord.ext import commands
 from github import Github, InputFileContent, Repository
 from cogs.pagination import BotEmbedPaginator
-
+import helpers
 
 class make_my_life_easier:
     def __init__(self, bot):
@@ -349,10 +349,7 @@ class make_my_life_easier:
             inline=False,
         )
         if data.get("body"):
-            embed.add_field(
-                name="Issue Comment",
-                value=data['body']
-            )
+            embed.add_field(name="Issue Comment", value=data["body"])
         if data.get("labels"):
             embed.add_field(
                 name="Issue Labels",
@@ -367,12 +364,10 @@ class make_my_life_easier:
 
         return embed
 
-    async def get_repo_contributors(self,repo,page):
+    async def get_repo_contributors(self, repo, page):
         data = self.g.get_repo(repo)
         contributors = data.get_contributors().get_page(page)
-        contributors_list = [
-            f"[`{x.login}`]({x.html_url})" for x in contributors
-        ]
+        contributors_list = [f"[`{x.login}`]({x.html_url})" for x in contributors]
         fields = 7
         decided = [
             contributors_list[i * fields : (i + 1) * fields]
@@ -616,6 +611,20 @@ class github(commands.Cog):
 
             await ctx.message.add_reaction("✔️")
             await ctx.send(returned)
+        except Exception as err:
+            await ctx.message.add_reaction("❌")
+            await ctx.send(err)
+
+    @commands.command(
+        name="--gist",
+        brief="Get information off of github basedd on user, repo, org",
+        description="Get information off of github based on user, repo, org.",
+    )
+    async def _github_gist(self, ctx, *, gist_link):
+        # ibxs_helper = make_my_life_easier(bot=self.bot)
+        try:
+            await helpers.gist.get_gist(ctx=ctx,gist_link=gist_link)
+            await ctx.message.add_reaction("✔️")
         except Exception as err:
             await ctx.message.add_reaction("❌")
             await ctx.send(err)
