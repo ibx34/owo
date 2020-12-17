@@ -1,6 +1,0 @@
-version: 2
-updates:
-- package-ecosystem: pipenv
-  directory: "/"
-  open-pull-requests-limit: 10
-
