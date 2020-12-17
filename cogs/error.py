@@ -80,15 +80,23 @@ class Error(commands.Cog):
         elif isinstance(error, discord.Forbidden):
             pass
         elif isinstance(error, commands.NotOwner):
-            await ctx.send("<:redX:788616379271872512> All checks failed.\nThis is an owner only command.")
+            await ctx.send(
+                "<:redX:788616379271872512> All checks failed.\nThis is an owner only command."
+            )
         elif isinstance(error, commands.BadArgument):
-            await ctx.send(f"<:redX:788616379271872512> All checks failed.\nInvalid argument. Did you type it correct?")
+            await ctx.send(
+                f"<:redX:788616379271872512> All checks failed.\nInvalid argument. Did you type it correct?"
+            )
         elif isinstance(error, commands.TooManyArguments):
-            await ctx.send(f"<:redX:788616379271872512> All checks failed.\nToo many arguments. Try less?")
+            await ctx.send(
+                f"<:redX:788616379271872512> All checks failed.\nToo many arguments. Try less?"
+            )
         elif isinstance(error, commands.MissingPermissions):
             await ctx.send(error)
         elif isinstance(error, commands.DisabledCommand):
-            await ctx.send(f"<:redX:788616379271872512> All checks failed.\n{ctx.command} is disabled.")
+            await ctx.send(
+                f"<:redX:788616379271872512> All checks failed.\n{ctx.command} is disabled."
+            )
         elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send(
                 f'<:redX:788616379271872512> All checks failed.\nI need the permission {", ".replace(error.missing_perms)}. You can check my role or channel overrides to find permissions.'
