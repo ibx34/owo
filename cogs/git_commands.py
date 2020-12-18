@@ -31,6 +31,7 @@ from github import Github, InputFileContent, Repository
 from cogs.pagination import BotEmbedPaginator
 import helpers
 
+
 class make_my_life_easier:
     def __init__(self, bot):
         self.bot = bot
@@ -266,10 +267,30 @@ class make_my_life_easier:
         list = []
         list2 = []
         for x in data.get_repos():
-            list.append(x.stargazers_count)
+            list.append(x.watchers_count)
             list2.append(x.html_url)
 
         return f"**{user}**'s most starred repo has **{max(list)}** stars.\nLink: <{list2[list.index(max(list))]}>"
+
+    async def find_largest_watched(self, user):
+        data = self.g.get_user(user)
+        list = []
+        list2 = []
+        for x in data.get_repos():
+            list.append(x.stargazers_count)
+            list2.append(x.html_url)
+
+        return f"**{user}**'s most watched repo has **{max(list)}** watches.\nLink: <{list2[list.index(max(list))]}>"
+
+    async def find_largest_fork(self, user):
+        data = self.g.get_user(user)
+        list = []
+        list2 = []
+        for x in data.get_repos():
+            list.append(x.forks_count)
+            list2.append(x.html_url)
+
+        return f"**{user}**'s most forked repo has **{max(list)}** forks.\nLink: <{list2[list.index(max(list))]}>"
 
     async def search_repo_commits(self, repo, page):
         data = self.g.get_repo(repo)
@@ -390,6 +411,15 @@ class github(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @classmethod
+    async def get_pref(cls, ctx, fetch_type):
+        async with ctx.bot.pool.acquire() as conn:
+            got = await conn.fetchval(
+                f"SELECT pref_{fetch_type} FROM user_settings WHERE user_id = $1",
+                ctx.author.id,
+            )
+            return got
+
     @commands.group(
         name="--user",
         brief="Get information off of github based on user, repo, org.",
@@ -397,6 +427,9 @@ class github(commands.Cog):
         invoke_without_command=True,
     )
     async def _github_user(self, ctx, *, user):
+        if user.lower() == "-p":
+            user = await self.get_pref(ctx=ctx, fetch_type="user")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.search_user(user=user)
@@ -412,7 +445,10 @@ class github(commands.Cog):
         brief="View a users **PUBLIC** repos",
         description="Get information on a users repository",
     )
-    async def _github_user_repos(self, ctx, user, page: int = 1):
+    async def _github_user_repos(self, ctx, user, page: int = 0):
+        if user.lower() == "-p":
+            user = await self.get_pref(ctx=ctx, fetch_type="user")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.search_user_repos(user=user, page=page)
@@ -444,6 +480,9 @@ class github(commands.Cog):
         invoke_without_command=True,
     )
     async def _github_repo(self, ctx, *, repo):
+        if repo.lower() == "-p":
+            repo = await self.get_pref(ctx=ctx, fetch_type="repo")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.search_repo(repo=repo)
@@ -459,7 +498,10 @@ class github(commands.Cog):
         brief="Get information off of github basedd on user, repo, org",
         description="Get information off of github based on user, repo, org.",
     )
-    async def _github_repo_commits(self, ctx, repo, page: int = 1):
+    async def _github_repo_commits(self, ctx, repo, page: int = 0):
+        if repo.lower() == "-p":
+            repo = await self.get_pref(ctx=ctx, fetch_type="repo")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.search_repo_commits(repo=repo, page=page)
@@ -475,7 +517,10 @@ class github(commands.Cog):
         brief="Get information off of github basedd on user, repo, org",
         description="Get information off of github based on user, repo, org.",
     )
-    async def _github_repo_issues(self, ctx, repo, page: int = 1):
+    async def _github_repo_issues(self, ctx, repo, page: int = 0):
+        if repo.lower() == "-p":
+            repo = await self.get_pref(ctx=ctx, fetch_type="repo")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.search_repo_issues(repo=repo, page=page)
@@ -493,7 +538,10 @@ class github(commands.Cog):
         brief="Get information off of github basedd on user, repo, org",
         description="Get information off of github based on user, repo, org.",
     )
-    async def _github_repo_contributors(self, ctx, repo, page: int = 1):
+    async def _github_repo_contributors(self, ctx, repo, page: int = 0):
+        if repo.lower() == "-p":
+            repo = await self.get_pref(ctx=ctx, fetch_type="repo")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.get_repo_contributors(repo=repo, page=page)
@@ -512,6 +560,9 @@ class github(commands.Cog):
         description="Get information off of github based on user, repo, org.",
     )
     async def _github_repo_issue(self, ctx, repo, issue_id):
+        if repo.lower() == "-p":
+            repo = await self.get_pref(ctx=ctx, fetch_type="repo")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.get_repo_issue(repo=repo, issue_id=issue_id)
@@ -605,9 +656,50 @@ class github(commands.Cog):
         description="Get information off of github based on user, repo, org.",
     )
     async def _github_starred(self, ctx, *, user):
+        if user.lower() == "-p":
+            user = await self.get_pref(ctx=ctx, fetch_type="user")
+
         ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
             returned = await ibxs_helper.find_largest_starred(user=user)
+
+            await ctx.message.add_reaction("✔️")
+            await ctx.send(returned)
+        except Exception as err:
+            await ctx.message.add_reaction("❌")
+            await ctx.send(err)
+
+    @commands.command(
+        name="--watched",
+        brief="Get information off of github basedd on user, repo, org",
+        description="Get information off of github based on user, repo, org.",
+    )
+    async def _github_watched(self, ctx, *, user):
+        if user.lower() == "-p":
+            user = await self.get_pref(ctx=ctx, fetch_type="user")
+
+        ibxs_helper = make_my_life_easier(bot=self.bot)
+        try:
+            returned = await ibxs_helper.find_largest_watched(user=user)
+
+            await ctx.message.add_reaction("✔️")
+            await ctx.send(returned)
+        except Exception as err:
+            await ctx.message.add_reaction("❌")
+            await ctx.send(err)
+
+    @commands.command(
+        name="--forked",
+        brief="Get information off of github basedd on user, repo, org",
+        description="Get information off of github based on user, repo, org.",
+    )
+    async def _github_forked(self, ctx, *, user):
+        if user.lower() == "-p":
+            user = await self.get_pref(ctx=ctx, fetch_type="user")
+
+        ibxs_helper = make_my_life_easier(bot=self.bot)
+        try:
+            returned = await ibxs_helper.find_largest_fork(user=user)
 
             await ctx.message.add_reaction("✔️")
             await ctx.send(returned)
@@ -621,9 +713,8 @@ class github(commands.Cog):
         description="Get information off of github based on user, repo, org.",
     )
     async def _github_gist(self, ctx, *, gist_link):
-        # ibxs_helper = make_my_life_easier(bot=self.bot)
         try:
-            await helpers.gist.get_gist(ctx=ctx,gist_link=gist_link)
+            await helpers.gist.get_gist(ctx=ctx, gist_link=gist_link)
             await ctx.message.add_reaction("✔️")
         except Exception as err:
             await ctx.message.add_reaction("❌")

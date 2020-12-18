@@ -63,6 +63,7 @@ class owo(commands.Bot):
         self.redis = await aioredis.create_redis_pool(
             "redis://localhost", loop=self.loop
         )
+        self.pool = await asyncpg.create_pool(**self.config.db, max_size=150)
 
         self.guild = self.get_guild(config.home_guild)
 
@@ -70,7 +71,14 @@ class owo(commands.Bot):
             status=discord.Status.online, activity=discord.Game("\\owo/")
         )
 
-        print("✔️ Bot started loading modules")
+        print("(!) Bot started loading schema")
+        try:
+            with open("schema.sql") as f:
+                await self.pool.execute(f.read())
+        except Exception as e:
+            print(f"Error in schema:\n{e}")
+
+        print("(!) Bot started loading modules")
         for ext in config.extensions:
             try:
                 self.load_extension(f"{ext}")
@@ -78,7 +86,7 @@ class owo(commands.Bot):
                 print(f"❌ Failed to load {ext}, {e}")
                 print(ext)
 
-        print(f"✔️ Bot started. Guilds: {len(self.guilds)} Users: {len(self.users)}")
+        print(f"(!) Bot started. Guilds: {len(self.guilds)} Users: {len(self.users)}")
 
     async def on_message(self, message):
 

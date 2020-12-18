@@ -25,6 +25,7 @@ from github import Github, InputFileContent, Repository
 
 g = Github(f"{config.github_token}")
 
+
 async def search_repo(self, repo):
     data = g.get_repo(repo).raw_data
     embed = discord.Embed(
@@ -71,6 +72,7 @@ async def search_repo(self, repo):
     )
     return embed
 
+
 async def search_repo_commits(self, repo, page):
     data = g.get_repo(repo)
     commits = data.get_commits().get_page(page)
@@ -89,6 +91,7 @@ async def search_repo_commits(self, repo, page):
         embed.add_field(name=f"Links", value="\n".join(decided[x]))
 
     return embed
+
 
 async def search_repo_issues(self, repo, page):
     data = g.get_repo(repo)
@@ -112,6 +115,7 @@ async def search_repo_issues(self, repo, page):
         pages.append(embed)
 
     return pages
+
 
 async def get_repo_issue(self, repo, issue_id):
     repo = g.get_repo(repo)
@@ -149,30 +153,23 @@ async def get_repo_issue(self, repo, issue_id):
         inline=False,
     )
     if data.get("body"):
-        embed.add_field(
-            name="Issue Comment",
-            value=data['body']
-        )
+        embed.add_field(name="Issue Comment", value=data["body"])
     if data.get("labels"):
         embed.add_field(
             name="Issue Labels",
             value=", ".join(
-                [
-                    f"**{data['labels'][x]['name']}**"
-                    for x in range(len(data["labels"]))
-                ]
+                [f"**{data['labels'][x]['name']}**" for x in range(len(data["labels"]))]
             ),
             inline=False,
         )
 
     return embed
 
-async def get_repo_contributors(self,repo,page):
+
+async def get_repo_contributors(self, repo, page):
     data = g.get_repo(repo)
     contributors = data.get_contributors().get_page(page)
-    contributors_list = [
-        f"[`{x.login}`]({x.html_url})" for x in contributors
-    ]
+    contributors_list = [f"[`{x.login}`]({x.html_url})" for x in contributors]
     fields = 7
     decided = [
         contributors_list[i * fields : (i + 1) * fields]

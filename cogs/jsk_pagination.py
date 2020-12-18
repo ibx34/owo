@@ -13,19 +13,24 @@ import re
 import discord
 from discord.ext import commands
 
-__all__ = ('EmojiSettings', 'PaginatorInterface', 'PaginatorEmbedInterface',
-           'WrappedPaginator', 'FilePaginator')
+__all__ = (
+    "EmojiSettings",
+    "PaginatorInterface",
+    "PaginatorEmbedInterface",
+    "WrappedPaginator",
+    "FilePaginator",
+)
 
 
 # emoji settings, this sets what emoji are used for PaginatorInterface
-EmojiSettings = collections.namedtuple('EmojiSettings', 'start back forward end close')
+EmojiSettings = collections.namedtuple("EmojiSettings", "start back forward end close")
 
 EMOJI_DEFAULT = EmojiSettings(
     start="\N{BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}",
     back="\N{BLACK LEFT-POINTING TRIANGLE}",
     forward="\N{BLACK RIGHT-POINTING TRIANGLE}",
     end="\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}",
-    close="\N{BLACK SQUARE FOR STOP}"
+    close="\N{BLACK SQUARE FOR STOP}",
 )
 
 
@@ -58,7 +63,7 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, bot: commands.Bot, paginator: commands.Paginator, **kwargs):
         if not isinstance(paginator, commands.Paginator):
-            raise TypeError('paginator must be a commands.Paginator instance')
+            raise TypeError("paginator must be a commands.Paginator instance")
 
         self._display_page = 0
 
@@ -67,21 +72,23 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
         self.message = None
         self.paginator = paginator
 
-        self.owner = kwargs.pop('owner', None)
-        self.emojis = kwargs.pop('emoji', EMOJI_DEFAULT)
-        self.timeout = kwargs.pop('timeout', 7200)
-        self.delete_message = kwargs.pop('delete_message', False)
+        self.owner = kwargs.pop("owner", None)
+        self.emojis = kwargs.pop("emoji", EMOJI_DEFAULT)
+        self.timeout = kwargs.pop("timeout", 7200)
+        self.delete_message = kwargs.pop("delete_message", False)
 
         self.sent_page_reactions = False
 
         self.task: asyncio.Task = None
         self.send_lock: asyncio.Event = asyncio.Event()
-        self.update_lock: asyncio.Lock = asyncio.Semaphore(value=kwargs.pop('update_max', 2))
+        self.update_lock: asyncio.Lock = asyncio.Semaphore(
+            value=kwargs.pop("update_max", 2)
+        )
 
         if self.page_size > self.max_page_size:
             raise ValueError(
-                f'Paginator passed has too large of a page size for this interface. '
-                f'({self.page_size} > {self.max_page_size})'
+                f"Paginator passed has too large of a page size for this interface. "
+                f"({self.page_size} > {self.max_page_size})"
             )
 
     @property
@@ -94,7 +101,11 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
         # pylint: disable=protected-access
         paginator_pages = list(self.paginator._pages)
         if len(self.paginator._current_page) > 1:
-            paginator_pages.append('\n'.join(self.paginator._current_page) + '\n' + (self.paginator.suffix or ''))
+            paginator_pages.append(
+                "\n".join(self.paginator._current_page)
+                + "\n"
+                + (self.paginator.suffix or "")
+            )
         # pylint: enable=protected-access
 
         return paginator_pages
@@ -133,7 +144,7 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
         If this exceeds `max_page_size`, an exception is raised upon instantiation.
         """
         page_count = self.page_count
-        return self.paginator.max_size + len(f'\nPage {page_count}/{page_count}')
+        return self.paginator.max_size + len(f"\nPage {page_count}/{page_count}")
 
     @property
     def send_kwargs(self) -> dict:
@@ -144,9 +155,9 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
         """
 
         display_page = self.display_page
-        page_num = f'\nPage {display_page + 1}/{self.page_count}'
+        page_num = f"\nPage {display_page + 1}/{self.page_count}"
         content = self.pages[display_page] + page_num
-        return {'content': content}
+        return {"content": content}
 
     async def add_line(self, *args, **kwargs):
         """
@@ -237,14 +248,16 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
                 payload.message_id == self.message.id,
                 emoji,
                 emoji in self.emojis,
-                payload.user_id != self.bot.user.id
+                payload.user_id != self.bot.user.id,
             )
 
             return all(tests)
 
         try:
             while not self.bot.is_closed():
-                payload = await self.bot.wait_for('raw_reaction_add', check=check, timeout=self.timeout)
+                payload = await self.bot.wait_for(
+                    "raw_reaction_add", check=check, timeout=self.timeout
+                )
 
                 emoji = payload.emoji
                 if isinstance(emoji, discord.PartialEmoji) and emoji.is_unicode_emoji():
@@ -266,7 +279,9 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
                 self.bot.loop.create_task(self.update())
 
                 try:
-                    await self.message.remove_reaction(payload.emoji, discord.Object(id=payload.user_id))
+                    await self.message.remove_reaction(
+                        payload.emoji, discord.Object(id=payload.user_id)
+                    )
                 except discord.Forbidden:
                     pass
 
@@ -318,15 +333,15 @@ class PaginatorEmbedInterface(PaginatorInterface):
     """
 
     def __init__(self, *args, **kwargs):
-        self._embed = kwargs.pop('embed', None) or discord.Embed()
+        self._embed = kwargs.pop("embed", None) or discord.Embed()
         super().__init__(*args, **kwargs)
 
     @property
     def send_kwargs(self) -> dict:
         display_page = self.display_page
         self._embed.description = self.pages[display_page]
-        self._embed.set_footer(text=f'Page {display_page + 1}/{self.page_count}')
-        return {'embed': self._embed}
+        self._embed.set_footer(text=f"Page {display_page + 1}/{self.page_count}")
+        return {"embed": self._embed}
 
     max_page_size = 2048
 
@@ -352,18 +367,25 @@ class WrappedPaginator(commands.Paginator):
         with any provided delimiter.
     """
 
-    def __init__(self, *args, wrap_on=('\n', ' '), include_wrapped=True, force_wrap=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        wrap_on=("\n", " "),
+        include_wrapped=True,
+        force_wrap=False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.wrap_on = wrap_on
         self.include_wrapped = include_wrapped
         self.force_wrap = force_wrap
 
-    def add_line(self, line='', *, empty=False):
+    def add_line(self, line="", *, empty=False):
         true_max_size = self.max_size - self._prefix_len - self._suffix_len - 2
         original_length = len(line)
 
         while len(line) > true_max_size:
-            search_string = line[0:true_max_size - 1]
+            search_string = line[0 : true_max_size - 1]
             wrapped = False
 
             for delimiter in self.wrap_on:
@@ -376,14 +398,14 @@ class WrappedPaginator(commands.Paginator):
                     if self.include_wrapped:
                         line = line[position:]
                     else:
-                        line = line[position + len(delimiter):]
+                        line = line[position + len(delimiter) :]
 
                     break
 
             if not wrapped:
                 if self.force_wrap:
-                    super().add_line(line[0:true_max_size - 1])
-                    line = line[true_max_size - 1:]
+                    super().add_line(line[0 : true_max_size - 1])
+                    line = line[true_max_size - 1 :]
                 else:
                     raise ValueError(
                         f"Line of length {original_length} had sequence of {len(line)} characters"
@@ -409,15 +431,15 @@ class FilePaginator(commands.Paginator):
         A shebang present in the actual file will always be prioritized over this.
     """
 
-    __encoding_regex = re.compile(br'coding[=:]\s*([-\w.]+)')
+    __encoding_regex = re.compile(br"coding[=:]\s*([-\w.]+)")
 
     def __init__(self, fp, line_span=None, language_hints=(), **kwargs):
-        language = ''
+        language = ""
 
         raw_content = fp.read()
 
         try:
-            lines = raw_content.decode('utf-8').split('\n')
+            lines = raw_content.decode("utf-8").split("\n")
         except UnicodeDecodeError as exc:
             # This file isn't UTF-8.
 
@@ -433,18 +455,18 @@ class FilePaginator(commands.Paginator):
                 raise exc
 
             try:
-                lines = raw_content.decode(encoding.decode('utf-8')).split('\n')
+                lines = raw_content.decode(encoding.decode("utf-8")).split("\n")
             except UnicodeDecodeError as exc2:
                 raise exc2 from exc
 
         del raw_content
 
         # If the first line is a shebang,
-        if lines[0].startswith('#!'):
+        if lines[0].startswith("#!"):
             # prioritize its declaration over the extension.
             language = language
 
-        super().__init__(prefix=f'```{language}', suffix='```', **kwargs)
+        super().__init__(prefix=f"```{language}", suffix="```", **kwargs)
 
         if line_span:
             line_span = sorted(line_span)
@@ -452,7 +474,7 @@ class FilePaginator(commands.Paginator):
             if min(line_span) < 1 or max(line_span) > len(lines):
                 raise ValueError("Linespan goes out of bounds.")
 
-            lines = lines[line_span[0] - 1:line_span[1]]
+            lines = lines[line_span[0] - 1 : line_span[1]]
 
         for line in lines:
             self.add_line(line)
