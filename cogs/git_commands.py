@@ -15,21 +15,23 @@ limitations under the License.
 """
 
 import asyncio
+import json
 import re
 from textwrap import dedent
 
-import json
 import aiohttp
 import aioredis
 import arrow
 import asyncpg
 import config
 import discord
+import helpers
 import requests
 from discord.ext import commands
 from github import Github, InputFileContent, Repository
+
+from cogs.jsk_pagination import PaginatorInterface, WrappedPaginator
 from cogs.pagination import BotEmbedPaginator
-import helpers
 
 
 class make_my_life_easier:
@@ -406,6 +408,9 @@ class make_my_life_easier:
 
         return pages
 
+    async def search_code(self,phrase,language,page):
+        return self.g.search_code(phrase,language=language).get_page(page)
+
 
 class github(commands.Cog):
     def __init__(self, bot):
@@ -720,6 +725,27 @@ class github(commands.Cog):
             await ctx.message.add_reaction("❌")
             await ctx.send(err)
 
+    @commands.command(name="--yardim")
+    async def _yardim(self,ctx,phrase,page:int=0):
+        ibxs_helper = make_my_life_easier(bot=self.bot)
+        try:
+            repos = await ibxs_helper.search_code(phrase=phrase,language="Javascript",page=page)
+            list = ""
+            for x in repos:
+                list += f"**{x.repository.full_name}** <{x.html_url}>\n"
+
+            paginator = WrappedPaginator(
+                prefix="",
+                suffix="",
+                max_size=1985,
+            )
+            paginator.add_line(list)
+            interface = PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
+            await interface.send_to(ctx)
+            await ctx.message.add_reaction("✔️")
+        except Exception as err:
+            await ctx.message.add_reaction("❌")
+            await ctx.send(err)
 
 def setup(bot):
     bot.add_cog(github(bot))

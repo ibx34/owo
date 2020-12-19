@@ -30,10 +30,6 @@ async def get_gist(ctx, gist_link):
     str = gist_link.split("/")
     gist_data = requests.get(f"https://api.github.com/gists/{str[4]}").json()
 
-    # embed = discord.Embed(color=config.base_color,title=f"Viewing gist from: \"{gist_data['owner']['login']}\"")
-    # for x in gist_data['files']:
-    #     embed.add_field(name=gist_data['files'][x]['filename'],value=f"```{gist_data['files'][x]['language']}\n{gist_data['files'][x]['content'][:1000]}```")
-
     for x in gist_data["files"]:
         paginator = WrappedPaginator(
             prefix=f'```{gist_data["files"][x]["language"]}',
